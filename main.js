@@ -1,6 +1,7 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
+const {net} = require('electron')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -54,3 +55,24 @@ app.on('activate', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
+exports.fetchData = function(domain, token) {
+  const request = net.request({
+    protocol: 'https:',
+    hostname: domain,
+    port: 443,
+    path: '/api/v4/snippets'
+  })
+  request.setHeader('PRIVATE-TOKEN', token)
+  console.log(request)
+  request.on('response', (response) => {
+    console.log(`STATUS: ${response.statusCode}`)
+    console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+    response.on('data', (chunk) => {
+      console.log(`BODY: ${chunk}`)
+    })
+    response.on('end', () => {
+      console.log('No more data in response.')
+    })
+  })
+  request.end()
+}

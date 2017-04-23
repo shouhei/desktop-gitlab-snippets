@@ -6,6 +6,7 @@
           <md-icon>settings</md-icon>
       </md-button>
     </md-toolbar>
+    <md-button @click.native="fetchData">request</md-button>
     <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
       <md-toolbar>
         <div class="md-toolbar-container">
@@ -27,6 +28,7 @@
 </template>
 
 <script>
+const remote = require('electron').remote
 export default {
   name: 'app',
   data () {
@@ -37,6 +39,9 @@ export default {
     }
   },
   methods: {
+    fetchData() {
+      remote.require("./main").fetchData(this.domain, this.private_token);
+    },
     toggleRightSidenav() {
       this.$refs.rightSidenav.toggle();
     },
