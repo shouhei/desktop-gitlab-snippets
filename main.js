@@ -54,7 +54,6 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-
 exports.fetchData = function(domain, token) {
   const request = net.request({
     protocol: 'https:',
@@ -63,16 +62,5 @@ exports.fetchData = function(domain, token) {
     path: '/api/v4/snippets'
   })
   request.setHeader('PRIVATE-TOKEN', token)
-  console.log(request)
-  request.on('response', (response) => {
-    console.log(`STATUS: ${response.statusCode}`)
-    console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-    response.on('data', (chunk) => {
-      console.log(`BODY: ${chunk}`)
-    })
-    response.on('end', () => {
-      console.log('No more data in response.')
-    })
-  })
-  request.end()
+  return request
 }
