@@ -11,15 +11,15 @@
     </md-toolbar>
     <md-layout md-gutter>
       <md-layout md-column md-flex="25">
-        <md-list v-for="snippet in snippets" >
-          <md-list-item @click.native="fetchSnippet(snippet.raw_url)">
-            <h4>{{snippet.title}}</h4>
+        <md-list v-for="s in snippets" >
+          <md-list-item @click.native="fetchSnippet(s.raw_url)">
+            <h4>{{s.title}}</h4>
           <md-divider></md-divider>
           </md-list-item>
         </md-list>
       </md-layout>
       <md-layout md-column>
-          <p>{{snippet}}</p>
+        <pre>{{snippet}}</pre>
       </md-layout>
     </md-layout>
     <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
@@ -57,6 +57,7 @@
 
 <script>
 const remote = require('electron').remote
+const utf8 = require('utf-8')
 export default {
   name: 'app',
   data () {
@@ -66,7 +67,7 @@ export default {
       private_token: 'private_token',
       proxy_url: '',
       snippets: [],
-      snnipet: ""
+      snippet: ""
     }
   },
   methods: {
@@ -93,9 +94,7 @@ export default {
         console.log(`STATUS: ${response.statusCode}`)
         console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         response.on('data', (chunk) => {
-          this.snippet = chunk.reduce(((previousValue, currentValue, index, array) => {
-            return previousValue + String.fromCharCode(currentValue)
-          }), '')
+          this.snippet = utf8.getStringFromBytes(chunk)
         })
         response.on('end', () => {
           console.log('No more data in response.')
