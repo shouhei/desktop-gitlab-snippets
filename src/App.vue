@@ -1,15 +1,118 @@
 <template>
+  <div>
     <md-toolbar>
-    <h1 class="md-title">{{project_name}}</h1>
+      <h1 class="md-title" style="flex: 1">{{project_name}}</h1>
+      <md-button class="md-icon-button" @click.native="fetchData">
+        <md-icon>refresh</md-icon>
+      </md-button>
+      <md-button class="md-icon-button" @click.native="toggleRightSidenav">
+        <md-icon>settings</md-icon>
+      </md-button>
     </md-toolbar>
+    <md-layout md-gutter>
+      <md-layout md-column md-flex="25">
+        <md-list v-for="s in snippets" >
+          <md-list-item @click.native="fetchSnippet(s.raw_url)">
+            <h4>{{s.title}}</h4>
+          <md-divider></md-divider>
+          </md-list-item>
+        </md-list>
+      </md-layout>
+      <md-layout md-column>
+        <pre>{{snippet}}</pre>
+      </md-layout>
+    </md-layout>
+    <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
+      <md-toolbar>
+        <div class="md-toolbar-container">
+          <h3 class="md-title">Sidenav content</h3>
+        </div>
+      </md-toolbar>
+      <form novalidate @submit.stop.prevent="submit">
+        <md-input-container>
+          <label>Domain</label>
+          <md-input v-model="domain"></md-input>
+        </md-input-container>
+        <md-input-container  md-has-password>
+          <label>Private Token</label>
+          <md-input type="password" v-model="private_token"></md-input>
+        </md-input-container>
+        <p>---</p>
+        <md-input-container>
+          <label>ProxyUrl</label>
+          <md-input v-model="proxy_url"></md-input>
+        </md-input-container>
+        <md-input-container  md-has-password>
+          <label>UserName</label>
+          <md-input v-model="use_name"></md-input>
+        </md-input-container>
+        <md-input-container>
+          <label>PassWord</label>
+          <md-input type="password" v-model="password"></md-input>
+        </md-input-container>
+      </form>
+    </md-sidenav>
+  </div>
 </template>
 
 <script>
+const remote = require('electron').remote
+const utf8 = require('utf-8')
 export default {
   name: 'app',
   data () {
     return {
-      project_name: 'Desktop GitLab Snippets'
+      project_name: 'Desktop GitLab Snippets',
+      domain: 'gitlab.com',
+      private_token: 'private_token',
+      proxy_url: '',
+      snippets: [],
+      snippet: ""
+    }
+  },
+  methods: {
+    fetchData() {
+      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
+      var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
+      request.on('response', (response) => {
+        console.log(`STATUS: ${response.statusCode}`)
+        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+        response.on('data', (chunk) => {
+          this.snippets = JSON.parse(chunk)
+        })
+        response.on('end', () => {
+          console.log('No more data in response.')
+        })
+      })
+      request.end()
+    },
+    fetchSnippet(raw_url) {
+      console.log(raw_url)
+      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
+      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, raw_url, this.proxy_url)
+      request.on('response', (response) => {
+        console.log(`STATUS: ${response.statusCode}`)
+        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+        response.on('data', (chunk) => {
+          this.snippet = utf8.getStringFromBytes(chunk)
+        })
+        response.on('end', () => {
+          console.log('No more data in response.')
+        })
+      })
+      request.end()
+    },
+    toggleRightSidenav() {
+      this.$refs.rightSidenav.toggle();
+    },
+    closeRightSidenav() {
+      this.$refs.rightSidenav.close();
+    },
+    open(ref) {
+      console.log('Opened: ' + ref);
+    },
+    close(ref) {
+      console.log('Closed: ' + ref);
     }
   }
 }
