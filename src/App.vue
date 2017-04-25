@@ -12,13 +12,15 @@
     <md-layout md-gutter>
       <md-layout md-column md-flex="25">
         <md-list v-for="snippet in snippets" >
-          <md-list-item>
+          <md-list-item @click.native="fetchSnippet(snippet.raw_url)">
             <h4>{{snippet.title}}</h4>
           <md-divider></md-divider>
           </md-list-item>
         </md-list>
       </md-layout>
-      <md-layout md-column></md-layout>
+      <md-layout md-column>
+          <p>{{snippet}}</p>
+      </md-layout>
     </md-layout>
     <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
       <md-toolbar>
@@ -63,17 +65,37 @@ export default {
       domain: 'gitlab.com',
       private_token: 'private_token',
       proxy_url: '',
-      snippets: []
+      snippets: [],
+      snnipet: ""
     }
   },
   methods: {
     fetchData() {
-      var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url);
+      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
+      var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
         console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         response.on('data', (chunk) => {
           this.snippets = JSON.parse(chunk)
+        })
+        response.on('end', () => {
+          console.log('No more data in response.')
+        })
+      })
+      request.end()
+    },
+    fetchSnippet(raw_url) {
+      console.log(raw_url)
+      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
+      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, raw_url, this.proxy_url)
+      request.on('response', (response) => {
+        console.log(`STATUS: ${response.statusCode}`)
+        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
+        response.on('data', (chunk) => {
+          this.snippet = chunk.reduce(((previousValue, currentValue, index, array) => {
+            return previousValue + String.fromCharCode(currentValue)
+          }), '')
         })
         response.on('end', () => {
           console.log('No more data in response.')

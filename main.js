@@ -54,12 +54,23 @@ app.on('activate', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-exports.fetchData = function(domain, token) {
+exports.fetchData = function(domain, token, proxy_url) {
   const request = net.request({
     protocol: 'https:',
     hostname: domain,
     port: 443,
     path: '/api/v4/snippets'
+  })
+  request.setHeader('PRIVATE-TOKEN', token)
+  return request
+}
+
+exports.fetchSnippet = function(domain, token, raw_url, proxy_url) {
+  const request = net.request({
+    protocol: 'https:',
+    hostname: domain,
+    port: 443,
+    path: raw_url
   })
   request.setHeader('PRIVATE-TOKEN', token)
   return request
