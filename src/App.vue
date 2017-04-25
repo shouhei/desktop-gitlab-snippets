@@ -72,7 +72,6 @@ export default {
   },
   methods: {
     fetchData() {
-      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
       var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
@@ -88,7 +87,6 @@ export default {
     },
     fetchSnippet(raw_url) {
       console.log(raw_url)
-      this.private_token = 'mDEkzjynjMjUEQXfxSxw'
       var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, raw_url, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
