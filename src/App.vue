@@ -19,6 +19,9 @@
         </md-list>
       </md-layout>
       <md-layout md-column>
+        <md-button class="md-fab md-fab-bottom-right" @click.native="toClipboard(this.snippet)">
+          <md-icon>content_copy</md-icon>
+        </md-button>
         <pre>{{snippet}}</pre>
       </md-layout>
     </md-layout>
@@ -57,6 +60,7 @@
 
 <script>
 const remote = require('electron').remote
+const clipboard = require('electron').clipboard
 const utf8 = require('utf-8')
 export default {
   name: 'app',
@@ -86,7 +90,6 @@ export default {
       request.end()
     },
     fetchSnippet(raw_url) {
-      console.log(raw_url)
       var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, raw_url, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
@@ -99,6 +102,9 @@ export default {
         })
       })
       request.end()
+    },
+    toClipboard(snippet) {
+      clipboard.writeText(snippet)
     },
     toggleRightSidenav() {
       this.$refs.rightSidenav.toggle();
