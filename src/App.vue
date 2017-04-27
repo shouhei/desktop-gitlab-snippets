@@ -74,6 +74,9 @@ export default {
       snippet: ""
     }
   },
+  created() {
+    this.fetchData()
+  },
   methods: {
     fetchData() {
       var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
