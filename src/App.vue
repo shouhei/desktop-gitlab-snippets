@@ -94,7 +94,6 @@ export default {
         return (this.snippet.content != "" && this.snippet.file_name != "")
     },
     fetchData(initSnnipet=false) {
-      this.private_token = 'bMEfjjQHhSLm4ohZzP6y'
       var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
@@ -112,7 +111,6 @@ export default {
       request.end()
     },
     fetchSnippet(snippet) {
-      this.private_token = 'bMEfjjQHhSLm4ohZzP6y'
       var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, snippet.raw_url, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
