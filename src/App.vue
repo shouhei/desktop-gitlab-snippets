@@ -9,26 +9,38 @@
         <md-icon>settings</md-icon>
       </md-button>
     </md-toolbar>
-    <md-layout md-gutter>
+    <md-layout md-gutter v-if="checkSnippetHasData()">
       <md-layout md-column md-flex="25">
         <md-list v-for="s in snippets" >
-          <md-list-item @click.native="fetchSnippet(s.raw_url)">
+          <md-list-item @click.native="fetchSnippet(s)">
             <h4>{{s.title}}</h4>
-          <md-divider></md-divider>
+            <md-divider></md-divider>
           </md-list-item>
         </md-list>
       </md-layout>
-      <md-layout md-column>
-        <md-button class="md-fab md-fab-bottom-right" @click.native="toClipboard(this.snippet)">
-          <md-icon>content_copy</md-icon>
-        </md-button>
-        <pre>{{snippet}}</pre>
+      <md-layout md-column md-gutter>
+        <md-card>
+          <md-card-header>
+            <div class="md-title">{{snippet.file_name}}</div>
+          </md-card-header>
+          <md-card-content>
+            <pre>{{snippet.contents}}</pre>
+          </md-card-content>
+          <md-card-actions>
+            <md-button class="md-icon-button" @click.native="toClipboard()">
+              <md-icon>content_copy</md-icon>
+            </md-button>
+          </md-card-actions>
+        </md-card>
       </md-layout>
+    </md-layout>
+    <md-layout v-else>
+      <md-spinner :md-size="150" md-indeterminate></md-spinner>
     </md-layout>
     <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
       <md-toolbar>
         <div class="md-toolbar-container">
-          <h3 class="md-title">Sidenav content</h3>
+          <h3 class="md-title">Configrations</h3>
         </div>
       </md-toolbar>
       <form novalidate @submit.stop.prevent="submit">
@@ -71,20 +83,26 @@ export default {
       private_token: 'private_token',
       proxy_url: '',
       snippets: [],
-      snippet: ""
+      snippet: {file_name: "", contents: ""}
     }
   },
   created() {
-    this.fetchData()
+    this.fetchData(true)
   },
   methods: {
-    fetchData() {
+    checkSnippetHasData() {
+        return (this.snippet.content != "" && this.snippet.file_name != "")
+    },
+    fetchData(initSnnipet=false) {
       var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
         console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         response.on('data', (chunk) => {
           this.snippets = JSON.parse(chunk)
+          if (initSnnipet) {
+             this.fetchSnippet(this.snippets[0])
+          }
         })
         response.on('end', () => {
           console.log('No more data in response.')
@@ -92,13 +110,13 @@ export default {
       })
       request.end()
     },
-    fetchSnippet(raw_url) {
-      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, raw_url, this.proxy_url)
+    fetchSnippet(snippet) {
+      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, snippet.raw_url, this.proxy_url)
       request.on('response', (response) => {
         console.log(`STATUS: ${response.statusCode}`)
         console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         response.on('data', (chunk) => {
-          this.snippet = utf8.getStringFromBytes(chunk)
+          this.snippet = {file_name: snippet.file_name, contents: utf8.getStringFromBytes(chunk)}
         })
         response.on('end', () => {
           console.log('No more data in response.')
@@ -106,8 +124,8 @@ export default {
       })
       request.end()
     },
-    toClipboard(snippet) {
-      clipboard.writeText(snippet)
+    toClipboard() {
+      clipboard.writeText(this.snippet.contents)
     },
     toggleRightSidenav() {
       this.$refs.rightSidenav.toggle();
@@ -124,3 +142,9 @@ export default {
   }
 }
 </script>
+<style>
+/* see https://github.com/marcosmoura/vue-material/issues/51 */
+body {
+  overflow-x: hidden;
+}
+</style>
