@@ -40,7 +40,7 @@
     <md-sidenav class="md-right" ref="rightSidenav" @open="open('Right')" @close="close('Right')">
       <md-toolbar>
         <div class="md-toolbar-container">
-          <h3 class="md-title">Sidenav content</h3>
+          <h3 class="md-title">Configrations</h3>
         </div>
       </md-toolbar>
       <form novalidate @submit.stop.prevent="submit">
@@ -119,7 +119,6 @@ export default {
         console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
         response.on('data', (chunk) => {
           this.snippet = {file_name: snippet.file_name, contents: utf8.getStringFromBytes(chunk)}
-          console.log(this.snippet)
         })
         response.on('end', () => {
           console.log('No more data in response.')
@@ -145,3 +144,9 @@ export default {
   }
 }
 </script>
+<style>
+/* see https://github.com/marcosmoura/vue-material/issues/51 */
+body {
+  overflow-x: hidden;
+}
+</style>
