@@ -9,7 +9,29 @@
         <md-icon>settings</md-icon>
       </md-button>
     </md-toolbar>
-    <md-layout md-gutter v-if="checkSnippetHasData()">
+    <md-layout md-ugger v-if="!checkPrivateTokenHasData()">
+        <md-card>
+          <md-card-header>
+            初期設定
+          </md-card-header>
+          <md-card-content>
+            <ol>
+              <li>右上の歯車マークを押す</li>
+              <li>利用したいgitlabのドメインを入力</li>
+              <li>利用したいドメインのgitlabから発行されているPrivateTokenを入力</li>
+              <li>SaveConfigrationsを押し保存する</li>
+              <li>保存後、{{project_name}}を始めるボタンを押す</li>
+            </ol>
+          </md-card-content>
+          <md-card-actions>
+            <md-button @click.native="fetchData">
+              {{project_name}} を始める
+           </md-button>
+          </md-card-actions>
+        </md-card>
+    </md-layout>
+    </md-layout>
+    <md-layout md-gutter v-else-if="checkSnippetHasData()">
       <md-layout md-column md-flex="25">
         <md-list v-for="s in snippets" >
           <md-list-item @click.native="fetchSnippet(s)">
@@ -46,25 +68,26 @@
       <form novalidate @submit.stop.prevent="submit">
         <md-input-container>
           <label>Domain</label>
-          <md-input v-model="domain"></md-input>
+          <md-input v-model="inputted_domain"></md-input>
         </md-input-container>
         <md-input-container  md-has-password>
           <label>Private Token</label>
-          <md-input type="password" v-model="private_token"></md-input>
+          <md-input type="password" v-model="inputted_private_token"></md-input>
         </md-input-container>
         <p>---</p>
         <md-input-container>
           <label>ProxyUrl</label>
-          <md-input v-model="proxy_url"></md-input>
+          <md-input v-model="inputted_proxy_url"></md-input>
         </md-input-container>
         <md-input-container  md-has-password>
           <label>UserName</label>
-          <md-input v-model="use_name"></md-input>
+          <md-input v-model="inputted_use_name"></md-input>
         </md-input-container>
         <md-input-container>
           <label>PassWord</label>
-          <md-input type="password" v-model="password"></md-input>
+          <md-input type="password" v-model="inputted_password"></md-input>
         </md-input-container>
+        <md-button class="md-primary" @click.native="saveConfigrations()">Save Configrations</md-button>
       </form>
     </md-sidenav>
   </div>
@@ -74,24 +97,46 @@
 const remote = require('electron').remote
 const clipboard = require('electron').clipboard
 const utf8 = require('utf-8')
+const localStorage = window.localStorage;
 export default {
   name: 'app',
   data () {
     return {
       project_name: 'Desktop GitLab Snippets',
       domain: 'gitlab.com',
+      inputted_domain: '',
       private_token: 'private_token',
+      inputted_private_token: 'private_token',
       proxy_url: '',
+      inputted_proxy_url: '',
       snippets: [],
       snippet: {file_name: "", contents: ""}
     }
   },
   created() {
+    this.renewConfigrations()
+    this.inputted_domain = this.domain
+    this.inputted_private_token = this.private_token
+    this.inputted_proxy_url = this.proxy_rul
     this.fetchData(true)
   },
   methods: {
+    renewConfigrations() {
+      this.domain = localStorage.getItem("domain") || "gitlab.com"
+      this.private_token = localStorage.getItem("private_token") || ""
+      this.proxy_url = localStorage.getItem("proxy_url") || ""
+    },
+    saveConfigrations() {
+      localStorage.setItem("domain", this.inputted_domain)
+      localStorage.setItem("private_token", this.inputted_private_token)
+      localStorage.setItem("proxy_url", this.inputted_proxy_url)
+      this.renewConfigrations()
+    },
+    checkPrivateTokenHasData() {
+      return (this.private_token != '')
+    },
     checkSnippetHasData() {
-        return (this.snippet.content != "" && this.snippet.file_name != "")
+      return (this.snippet.content != "" && this.snippet.file_name != "")
     },
     fetchData(initSnnipet=false) {
       var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
