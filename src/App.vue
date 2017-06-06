@@ -139,35 +139,31 @@ export default {
       return (this.snippet.content != "" && this.snippet.file_name != "")
     },
     fetchData(initSnnipet=false) {
-      var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
-      request.on('response', (response) => {
-        console.log(`STATUS: ${response.statusCode}`)
-        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-        response.on('data', (chunk) => {
-          this.snippets = JSON.parse(chunk)
-          if (initSnnipet) {
-             this.fetchSnippet(this.snippets[0])
-          }
-        })
-        response.on('end', () => {
-          console.log('No more data in response.')
-        })
+      var client = remote.require("./main").getClient()
+      client.get("/api/v4/snippets", {
+        baseURL: `https://${this.domain}`,
+        headers: {"PRIVATE-TOKEN": this.private_token}
       })
-      request.end()
+      .then( response => {
+        this.snippets = response.data
+        if (initSnnipet) {
+           this.fetchSnippet(this.snippets[0])
+        }
+      }).catch( error => {
+        console.log(error)
+      })
     },
     fetchSnippet(snippet) {
-      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, snippet.raw_url, this.proxy_url)
-      request.on('response', (response) => {
-        console.log(`STATUS: ${response.statusCode}`)
-        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-        response.on('data', (chunk) => {
-          this.snippet = {file_name: snippet.file_name, contents: utf8.getStringFromBytes(chunk)}
-        })
-        response.on('end', () => {
-          console.log('No more data in response.')
-        })
+      var client = remote.require("./main").getClient()
+      client.get("",{
+        baseURL: snippet.raw_url,
+        headers:{"PRIVATE-TOKEN": this.private_token}
       })
-      request.end()
+      .then( response => {
+        this.snippet = {file_name: snippet.file_name, contents: response.data}
+      }).catch( error => {
+        console.log(error)
+      })
     },
     toClipboard() {
       clipboard.writeText(this.snippet.contents)
