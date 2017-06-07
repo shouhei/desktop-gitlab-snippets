@@ -76,14 +76,18 @@
         </md-input-container>
         <p>---</p>
         <md-input-container>
-          <label>ProxyUrl</label>
-          <md-input v-model="inputted_proxy_url"></md-input>
+          <label>ProxyDomain</label>
+          <md-input v-model="inputted_proxy_domain"></md-input>
         </md-input-container>
-        <md-input-container  md-has-password>
+        <md-input-container>
+          <label>ProxyPort</label>
+          <md-input v-model="inputted_proxy_port"></md-input>
+        </md-input-container>
+        <md-input-container>
           <label>UserName</label>
           <md-input v-model="inputted_use_name"></md-input>
         </md-input-container>
-        <md-input-container>
+        <md-input-container md-has-password>
           <label>PassWord</label>
           <md-input type="password" v-model="inputted_password"></md-input>
         </md-input-container>
@@ -108,7 +112,14 @@ export default {
       private_token: 'private_token',
       inputted_private_token: 'private_token',
       proxy_url: '',
-      inputted_proxy_url: '',
+      inputted_proxy_domain: '',
+      proxy_domain: '',
+      inputted_proxy_port: '',
+      proxy_port: '',
+      inputted_proxy_user: '',
+      proxy_user: '',
+      inputted_proxy_password: '',
+      proxy_password: '',
       snippets: [],
       snippet: {file_name: "", contents: ""}
     }
@@ -117,19 +128,27 @@ export default {
     this.renewConfigrations()
     this.inputted_domain = this.domain
     this.inputted_private_token = this.private_token
-    this.inputted_proxy_url = this.proxy_rul
+    this.inputted_proxy_domain = this.proxy_domainp
+    this.inputted_proxy_port = this.proxy_port
+    this.inputted_proxy_user = this.proxy_user
+    this.inputted_proxy_password = this.proxy_password
     this.fetchData(true)
   },
   methods: {
     renewConfigrations() {
       this.domain = localStorage.getItem("domain") || "gitlab.com"
       this.private_token = localStorage.getItem("private_token") || ""
-      this.proxy_url = localStorage.getItem("proxy_url") || ""
+      this.proxy_domain = localStorage.getItem("proxy_domain") || ""
+      this.proxy_port = localStorage.getItem("proxy_port") || ""
+      this.proxy_user = localStorage.getItem("proxy_user") || ""
+      this.proxy_password = localStorage.getItem("proxy_password") || ""
     },
     saveConfigrations() {
       localStorage.setItem("domain", this.inputted_domain)
       localStorage.setItem("private_token", this.inputted_private_token)
-      localStorage.setItem("proxy_url", this.inputted_proxy_url)
+      localStorage.setItem("proxy_domain", this.inputted_proxy_domain)
+      localStorage.setItem("proxy_port", this.inputted_proxy_user)
+      localStorage.setItem("proxy_password", this.inputted_proxy_password)
       this.renewConfigrations()
     },
     checkPrivateTokenHasData() {
@@ -138,36 +157,49 @@ export default {
     checkSnippetHasData() {
       return (this.snippet.content != "" && this.snippet.file_name != "")
     },
+    generateConfWithProxy() {
+        if (this.proxy_domain == "") {
+            return {}
+        }
+        conf = {}
+        conf["host"] =  this.proxy_domain
+        if (this.proxy_port == "") {
+           conf["port"] == 80
+        } else {
+           conf["port"] = this.proxy_port
+        }
+        if (this.proxy_user == "" || this.proxy_password == "") {
+           return conf
+        }
+        conf["auth"]["username"] = this.proxy_user
+        conf["auth"]["password"] = this.proxy_password
+    },
     fetchData(initSnnipet=false) {
-      var request = remote.require("./main").fetchData(this.domain, this.private_token, this.proxy_url)
-      request.on('response', (response) => {
-        console.log(`STATUS: ${response.statusCode}`)
-        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-        response.on('data', (chunk) => {
-          this.snippets = JSON.parse(chunk)
-          if (initSnnipet) {
-             this.fetchSnippet(this.snippets[0])
-          }
-        })
-        response.on('end', () => {
-          console.log('No more data in response.')
-        })
+      let client = remote.require("./main").getClient()
+      let conf = this.generateConfWithProxy()
+      conf["baseURL"] = `https://${this.domain}`
+      conf["headers"] = {"PRIVATE-TOKEN": this.private_token}
+      client.get("/api/v4/snippets", conf)
+      .then( response => {
+        this.snippets = response.data
+        if (initSnnipet) {
+           this.fetchSnippet(this.snippets[0])
+        }
+      }).catch( error => {
+        console.log(error)
       })
-      request.end()
     },
     fetchSnippet(snippet) {
-      var request = remote.require("./main").fetchSnippet(this.domain, this.private_token, snippet.raw_url, this.proxy_url)
-      request.on('response', (response) => {
-        console.log(`STATUS: ${response.statusCode}`)
-        console.log(`HEADERS: ${JSON.stringify(response.headers)}`)
-        response.on('data', (chunk) => {
-          this.snippet = {file_name: snippet.file_name, contents: utf8.getStringFromBytes(chunk)}
-        })
-        response.on('end', () => {
-          console.log('No more data in response.')
-        })
+      let client = remote.require("./main").getClient()
+      let conf = this.generateConfWithProxy()
+      conf["baseURL"] = snippet.raw_url
+      conf["headers"] = {"PRIVATE-TOKEN": this.private_token}
+      client.get("", conf)
+      .then( response => {
+        this.snippet = {file_name: snippet.file_name, contents: response.data}
+      }).catch( error => {
+        console.log(error)
       })
-      request.end()
     },
     toClipboard() {
       clipboard.writeText(this.snippet.contents)
